@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trust Talk - Secure Chat</title>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <h1>Trust Talk - Secure Chat</h1>
+
+  <!-- পাসওয়ার্ড ভ্যালিডেশন -->
+  <input type="password" id="password" placeholder="Enter Password">
+  <button onclick="checkPassword()">Login</button>
+
+  <!-- চ্যাট এরিয়া -->
+  <div id="chatArea" style="display: none;">
+    <input type="text" id="message" placeholder="Type a message">
+    <button onclick="sendMessage()">Send</button>
+    <div id="messages"></div>
+  </div>
+
+  <script>
+    const socket = io();
+
+    // পাসওয়ার্ড যাচাই
+    function checkPassword() {
+      const password = document.getElementById('password').value;
+      socket.emit('checkPassword', { password });
+    }
+
+    socket.on('passwordValid', (data) => {
+      if (data.success) {
+        document.getElementById('chatArea').style.display = 'block';  // চ্যাট সিস্টেম দেখাও
+      }
+    });
+
+    socket.on('passwordInvalid', (data) => {
+      alert("Incorrect password");
+    });
+
+    // মেসেজ প্রেরণ
+    function sendMessage() {
+      const message = document.getElementById('message').value;
+      const messageData = {
+        message,
+        valid: true  // পাসওয়ার্ড মিলেছে, তাই মেসেজ পাঠানো যাবে
+      };
+      socket.emit('sendMessage', messageData);
+      document.getElementById('messages').innerHTML += `<p>${message}</p>`;
+    }
+
+    // মেসেজ ডিলিট হওয়ার পরে
+    socket.on('deleteMessage', () => {
+      document.getElementById('messages').innerHTML = '';  // চ্যাট মেসেজগুলো মুছে ফেলো
+    });
+
+    // নতুন মেসেজ পাওয়া
+    socket.on('newMessage', (data) => {
+      document.getElementById('messages').innerHTML += `<p>${data.message}</p>`;
+    });
+  </script>
+</body>
+</html>
